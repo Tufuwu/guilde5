@@ -1,68 +1,69 @@
-# python-zxing
+# Rank-BM25: A two line search engine
 
-[![PyPI](https://img.shields.io/pypi/v/zxing.svg)](https://pypi.python.org/pypi/zxing)
-[![Build Status](https://github.com/dlenski/python-zxing/workflows/test_and_release/badge.svg)](https://github.com/dlenski/python-zxing/actions?query=workflow%3Atest_and_release)
-[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+![Build Status](https://github.com/dorianbrown/rank_bm25/workflows/pytest/badge.svg)
+[![PyPI version](https://badge.fury.io/py/rank-bm25.svg)](https://badge.fury.io/py/rank-bm25)
+[![DOI](https://zenodo.org/badge/166720547.svg)](https://zenodo.org/badge/latestdoi/166720547)
 
-This is a wrapper for the [ZXing barcode library](https://github.com/zxing/zxing). (It's a "slightly less quick-and-dirty" fork of [oostendo/python-zxing](https://github.com/oostendo/python-zxing).)
-It will allow you to read and decode barcode images from Python.
+A collection of algorithms for querying a set of documents and returning the ones most relevant to the query. The most common use case for these algorithms is, as you might have guessed, to create search engines.
 
-## Dependencies and installation
+So far the algorithms that have been implemented are:
+- [x] Okapi BM25
+- [x] BM25L
+- [x] BM25+
+- [ ] BM25-Adpt
+- [ ] BM25T 
 
-Use the Python 3 version of pip (usually invoked via `pip3`) to install: `pip3 install zxing`
+These algorithms were taken from [this paper](http://www.cs.otago.ac.nz/homepages/andrew/papers/2014-2.pdf), which gives a nice overview of each method, and also benchmarks them against each other. A nice inclusion is that they compare different kinds of preprocessing like stemming vs no-stemming, stopword removal or not, etc. Great read if you're new to the topic. 
 
-* You'll neeed to have a recent `java` binary somewhere in your path. (Tested with OpenJDK v7, v8, v11.)
-* pip will automatically download the relevant [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) files for the Java ZXing libraries (currently v3.4.1)
+## Installation
+The easiest way to install this package is through `pip`, using
+```bash
+pip install rank_bm25
+```
+If you want to be sure you're getting the newest version, you can install it directly from github with
+```bash
+pip install git+ssh://git@github.com/dorianbrown/rank_bm25.git
+```
 
 ## Usage
+For this example we'll be using the `BM25Okapi` algorithm, but the others are used in pretty much the same way.
 
-The `BarCodeReader` class is used to decode images:
+### Initalizing
 
+First thing to do is create an instance of the BM25 class, which reads in a corpus of text and does some indexing on it:
 ```python
->>> import zxing
->>> reader = zxing.BarCodeReader()
->>> print(reader.zxing_version, reader.zxing_version_info)
-3.4.1 (3, 4, 1)
->>> barcode = reader.decode("test/barcodes/QR_CODE-easy.png")
->>> print(barcode)
-BarCode(raw='This should be QR_CODE', parsed='This should be QR_CODE', format='QR_CODE', type='TEXT', points=[(15.0, 87.0), (15.0, 15.0), (87.0, 15.0), (75.0, 75.0)])
+from rank_bm25 import BM25Okapi
+
+corpus = [
+    "Hello there good man!",
+    "It is quite windy in London",
+    "How is the weather today?"
+]
+
+tokenized_corpus = [doc.split(" ") for doc in corpus]
+
+bm25 = BM25Okapi(tokenized_corpus)
+# <rank_bm25.BM25Okapi at 0x1047881d0>
 ```
+Note that this package doesn't do any text preprocessing. If you want to do things like lowercasing, stopword removal, stemming, etc, you need to do it yourself. 
 
-The attributes of the decoded `BarCode` object are `raw`, `parsed`, `format`, `type`, and `points`. The list of formats which ZXing can decode is
-[here](https://zxing.github.io/zxing/apidocs/com/google/zxing/BarcodeFormat.html).
+The only requirements is that the class receives a list of lists of strings, which are the document tokens.
 
-The `decode()` method accepts an image path (or list of paths) and takes optional parameters `try_harder` (boolean), `possible_formats` (list of formats to consider), and `pure_barcode` (boolean).
-If no barcode is found, it returns `None`, and if it encounters any other recognizable error from the Java ZXing library, it raises `BarCodeReaderException`.
+### Ranking of documents
 
-## Command-line interface
+Now that we've created our document indexes, we can give it queries and see which documents are the most relevant:
+```python
+query = "windy London"
+tokenized_query = query.split(" ")
 
-The command-line interface can decode images into barcodes and output in either a human-readable or CSV format:
-
+doc_scores = bm25.get_scores(tokenized_query)
+# array([0.        , 0.93729472, 0.        ])
 ```
-usage: zxing [-h] [-c] [--try-harder] image [image ...]
+Good to note that we also need to tokenize our query, and apply the same preprocessing steps we did to the documents in order to have an apples-to-apples comparison
+
+Instead of getting the document scores, you can also just retrieve the best documents with
+```python
+bm25.get_top_n(tokenized_query, corpus, n=1)
+# ['It is quite windy in London']
 ```
-
-Human-readable:
-
-```sh
-$ zxing /tmp/barcode.png
-/tmp/barcode.png
-================
-  Decoded TEXT barcode in QR_CODE format.
-  Raw text:    'Testing 123'
-  Parsed text: 'Testing 123'
-```
-
-CSV output (can be opened by LibreOffice or Excel):
-
-```sh
-$ zxing /tmp/barcode1.png /tmp/barcode2.png /tmp/barcode3.png
-Filename,Format,Type,Raw,Parsed
-/tmp/barcode1.png,CODE_128,TEXT,Testing 123,Testing 123
-/tmp/barcode2.png,QR_CODE,URI,http://zxing.org,http://zxing.org
-/tmp/barcode3.png,QR_CODE,TEXT,"This text, ""Has stuff in it!"" Wow⏎Yes it does!","This text, ""Has stuff in it!"" Wow⏎Yes it does!"
-```
-
-## License
-
-LGPLv3
+And that's pretty much it!

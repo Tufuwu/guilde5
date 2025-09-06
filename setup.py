@@ -1,60 +1,32 @@
-#!/usr/bin/env python3
-
-import sys
-from os import R_OK, access, makedirs, path
-from urllib.error import URLError
-from urllib.request import urlretrieve
-
 from setuptools import setup
+import io
+import os
 
-if not sys.version_info[0] == 3:
-    sys.exit("Python 2.x is not supported; Python 3.x is required.")
+here = os.path.abspath(os.path.dirname(__file__))
 
-########################################
+short_description = 'Various BM25 algorithms for document ranking'
 
-version_py = path.join(path.dirname(__file__), 'zxing', 'version.py')
-
-d = {}
-with open(version_py, 'r') as fh:
-    exec(fh.read(), d)
-    version_pep = d['__version__']
-
-########################################
-
-
-def download_java_files(force=False):
-    files = {'java/javase.jar': 'https://repo1.maven.org/maven2/com/google/zxing/javase/3.4.1/javase-3.4.1.jar',
-             'java/core.jar': 'https://repo1.maven.org/maven2/com/google/zxing/core/3.4.1/core-3.4.1.jar',
-             'java/jcommander.jar': 'https://repo1.maven.org/maven2/com/beust/jcommander/1.78/jcommander-1.78.jar'}
-
-    for fn, url in files.items():
-        p = path.join(path.dirname(__file__), 'zxing', fn)
-        d = path.dirname(p)
-        if not force and access(p, R_OK):
-            print("Already have %s." % p)
-        else:
-            print("Downloading %s from %s ..." % (p, url))
-            try:
-                makedirs(d, exist_ok=True)
-                urlretrieve(url, p)
-            except (OSError, URLError) as e:
-                raise
-    return list(files.keys())
-
+try:
+    with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+        long_description = '\n' + f.read()
+except FileNotFoundError:
+    long_description = short_description
 
 setup(
-    name='zxing',
-    version=version_pep,
-    description="wrapper for zebra crossing (zxing) barcode library",
-    long_description="More information: https://github.com/dlenski/python-zxing",
-    url="https://github.com/dlenski/python-zxing",
-    author='Daniel Lenski',
-    author_email='dlenski@gmail.com',
-    packages=['zxing'],
-    package_data={'zxing': download_java_files()},
-    entry_points={'console_scripts': ['zxing=zxing.__main__:main']},
-    install_requires=open('requirements.txt').readlines(),
-    tests_require=open('requirements-test.txt').readlines(),
-    test_suite='nose.collector',
-    license='LGPL v3 or later',
+    name='rank_bm25',
+    version='0.2.1',
+    description=short_description,
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    author='D. Brown',
+    author_email='dorianstuartbrown@gmail.com',
+    url="https://github.com/dorianbrown/rank_bm25",
+    license='Apache2.0',
+    py_modules=['rank_bm25'],
+    install_requires=['numpy'],
+    extras_require={
+        'dev': [
+            'pytest'
+        ]
+    }
 )
