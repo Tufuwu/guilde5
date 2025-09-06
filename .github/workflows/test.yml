@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
   test:
@@ -14,9 +16,25 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8']
-        django-version: ['1.11']
+        test-suite:
+          - adddelete
+          - compartmentedmodel
+          - networkdynamics
+          - sir
+          - sirs
+          - sir_fixedrecovery
+          - sis
+          - sis_fixedrecovery
+          - seir
+          - stochasticrates
+          - monitor
+          - generators
+          - loci
+          - adddelete
+          - percolate
+
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -24,29 +42,23 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install system dependencies
+        run: sudo apt-get install -y libhdf5-dev
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install Django==${{ matrix.django-version }}
-          pip install -e .[flake8,tests]
+          pip install -r requirements.txt
+          pip install coveralls nose
 
-      - name: Set up Django test settings
-        run: |
-          echo "DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}}" > test_settings.py
-          echo "INSTALLED_APPS = ['django.contrib.contenttypes', 'django.contrib.auth', 'django.contrib.staticfiles']" >> test_settings.py
-          echo "SECRET_KEY = 'test'" >> test_settings.py
-          echo "STATIC_URL = '/static/'" >> test_settings.py
-          echo "STATIC_ROOT = 'staticfiles'" >> test_settings.py
+      - name: Install package
+        run: python setup.py install
 
-      - name: Collect static files
-        run: python manage.py collectstatic --noinput
+      - name: Run tests
+        run: coverage run --include './epydemic/*' -m nose test/test_${{ matrix.test-suite }}.py
 
-      - name: Lint with flake8
-        run: flake8
-
-      - name: Test with pytest
+      - name: Upload coverage to Coveralls
+        if: success()
         env:
-          DJANGO_SETTINGS_MODULE: test_settings
-        run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          pytest
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: coveralls
