@@ -1,47 +1,37 @@
-# Setup for epydemic
-#
-# Copyright (C) 2017--2021 Simon Dobson
-#
-# This file is part of epydemic, epidemic network simulations in Python.
-#
-# epydemic is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# epydemic is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with epydemic. If not, see <http://www.gnu.org/licenses/gpl.html>.
-
 from setuptools import setup
 
-with open('README.rst') as f:
-    longDescription = f.read()
+with open('README.md', 'r') as fh:
+    long_description = fh.read()
 
-setup(name = 'epydemic',
-      version = '1.4.2',
-      description = 'Epidemic network simulations in Python',
-      long_description = longDescription,
-      url = 'http://github.com/simoninireland/epydemic',
-      author = 'Simon Dobson',
-      author_email = 'simoninireland@gmail.com',
-      license = 'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-      classifiers = [ 'Development Status :: 4 - Beta',
-                      'Intended Audience :: Science/Research',
-                      'Intended Audience :: Developers',
-                      'Programming Language :: Python :: 3.6',
-                      'Programming Language :: Python :: 3.7',
-                      'Programming Language :: Python :: 3.8',
-                      'Programming Language :: Python :: 3.9',
-                      'Topic :: Scientific/Engineering' ],
-      python_requires = '>=3.6',
-      packages = [ 'epydemic' ],
-      package_data = { 'epydemic': [ 'py.typed' ] },
-      zip_safe = False,
-      install_requires = [ "networkx >= 2.4", "epyc >= 1.2.1", "pandas", "numpy >= 1.18", "mpmath",  ],
-      extra_requires = { ':python_version < 3.8': [ 'typing_extensions' ] },
+setup(
+    name='linkedin-jobs-scraper',
+    version='1.4.0',
+    author='Ludovico Fabbri',
+    author_email='ludovico.fabbri@gmail.com',
+    description='Scrape public available jobs on Linkedin using headless browser',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    url='https://github.com/spinlud/py-linkedin-jobs-scraper.git',
+    packages=[
+        'linkedin_jobs_scraper',
+        'linkedin_jobs_scraper.chrome_cdp',
+        'linkedin_jobs_scraper.events',
+        'linkedin_jobs_scraper.exceptions',
+        'linkedin_jobs_scraper.filters',
+        'linkedin_jobs_scraper.query',
+        'linkedin_jobs_scraper.strategies',
+        'linkedin_jobs_scraper.utils',
+    ],
+    install_requires=[
+        'selenium',
+        'websocket-client'
+    ],
+    classifiers=[
+        'Intended Audience :: Developers',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.6',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+    ],
+    python_requires='>=3.6',
 )
